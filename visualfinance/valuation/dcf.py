@@ -1,3 +1,4 @@
+from typing import List
 def FCF(Nopat: float, Depreciacion: float, Amortizacion: float,
         Capex: float, VariacionCapitalTrabajo: float) -> float:
     """
@@ -27,7 +28,7 @@ def NOPAT(Ebit:float,TasaImpositiva:float)->float:
     Returns:
         float: NOPAT (Net Operating Profit After Taxes) --> Mide el rendimiento operativo real descontando impuestos, pero sin tener en cuenta la deuda
     """
-    return Ebit/(1-TasaImpositiva)
+    return Ebit*(1-TasaImpositiva)
 
 def EBIT(Ingresos:float,CostosOperativos:float,GastosGenerales:float)->float:
     """
@@ -55,3 +56,47 @@ def EBITDA(Ebit:float,Depreciacion:float,Amortizacion:float)->float:
         float: Mide la rentabilidad operativa antes de impactos contables y financieros. Ideal para comparar empresas con diferentes estructuras financieras
     """
     return Ebit+Depreciacion+Amortizacion
+
+
+def calculate_dcf_present_value(
+    discount_rate: float,
+    free_cash_flows: List[float],
+    terminal_value: float
+) -> float:
+    """
+    Calcula el Valor Presente (VP) de una serie de flujos de caja futuros y un
+    valor terminal, descontados a una tasa específica.
+
+    Args:
+        discount_rate (float): La tasa de descuento a utilizar para traer los
+            flujos futuros a valor presente. Normalmente es el WACC o el Coste
+            de Capital (Ke).
+        free_cash_flows (List[float]): Una lista con los Flujos de Caja Libres
+            (FCF) proyectados para los próximos N años.
+            **Este es un parámetro basado en hipótesis y análisis humano.**
+        terminal_value (float): La estimación del valor de la empresa al final
+            del período de proyección (año N).
+            **Este es un parámetro basado en hipótesis y análisis humano.**
+
+    Returns:
+        float: El valor presente total de la empresa (Enterprise Value si se
+               usan FCFF y WACC).
+    """
+    present_value = 0.0
+
+    # 1. Descontar cada flujo de caja libre del período de proyección explícito
+    for i, fcf in enumerate(free_cash_flows):
+        period = i + 1
+        present_value += fcf / ((1 + discount_rate) ** period)
+
+    # 2. Descontar el valor terminal
+    #    Se descuenta por el número de períodos en la proyección explícita.
+    num_periods = len(free_cash_flows)
+    present_value_terminal = terminal_value / \
+        ((1 + discount_rate) ** num_periods)
+
+    # 3. Sumar ambos componentes
+    total_present_value = present_value + present_value_terminal
+
+    return total_present_value
+
